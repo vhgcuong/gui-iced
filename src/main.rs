@@ -1,40 +1,75 @@
-use iced::widget::{button, column, text, Column};
-use iced::Alignment;
+use iced::theme;
+use iced::widget::tooltip::Position;
+use iced::widget::{button, container, tooltip};
+use iced::{Element, Length, Sandbox, Settings};
 
 pub fn main() -> iced::Result {
-    iced::run("A cool counter", Counter::update, Counter::view)
+    Example::run(Settings::default())
 }
 
-#[derive(Default)]
-struct Counter {
-    value: i64,
+struct Example {
+    position: Position,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 enum Message {
-    Increment,
-    Decrement,
+    ChangePosition,
 }
 
-impl Counter {
+impl Sandbox for Example {
+    type Message = Message;
+
+    fn new() -> Self {
+        Self {
+            position: Position::Bottom,
+        }
+    }
+
+    fn title(&self) -> String {
+        String::from("Tooltip - Iced")
+    }
+
     fn update(&mut self, message: Message) {
         match message {
-            Message::Increment => {
-                self.value += 1;
-            }
-            Message::Decrement => {
-                self.value -= 1;
+            Message::ChangePosition => {
+                let position = match &self.position {
+                    Position::FollowCursor => Position::Top,
+                    Position::Top => Position::Bottom,
+                    Position::Bottom => Position::Left,
+                    Position::Left => Position::Right,
+                    Position::Right => Position::FollowCursor,
+                };
+
+                self.position = position;
             }
         }
     }
 
-    fn view(&self) -> Column<Message> {
-        column![
-            button("Increment").on_press(Message::Increment),
-            text(self.value).size(50),
-            button("Decrement").on_press(Message::Decrement)
-        ]
-            .padding(20)
-            .align_items(Alignment::Center)
+    fn view(&self) -> Element<Message> {
+        let tooltip = tooltip(
+            button("Press to change position")
+                .on_press(Message::ChangePosition),
+            position_to_text(self.position),
+            self.position,
+        )
+            .gap(10)
+            .style(theme::Container::Box);
+
+        container(tooltip)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x()
+            .center_y()
+            .into()
+    }
+}
+
+fn position_to_text<'a>(position: Position) -> &'a str {
+    match position {
+        Position::FollowCursor => "Follow Cursor",
+        Position::Top => "Top",
+        Position::Bottom => "Bottom",
+        Position::Left => "Left",
+        Position::Right => "Right",
     }
 }
